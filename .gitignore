@@ -1,0 +1,19 @@
+# Node modules
+node_modules/
+
+# Auth & cache folder dari whatsapp-web.js
+.wwebjs_auth/
+.wwebjs_cache/
+
+# Log files
+*.log
+
+# Environment files
+.env
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# NPM lock file (opsional, tergantung tim)
+# package-lock.json
