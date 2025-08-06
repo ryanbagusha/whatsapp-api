@@ -2,8 +2,8 @@ require('dotenv').config();
 
 const qrcode = require('qrcode-terminal');
 const { Client, LocalAuth } = require('whatsapp-web.js');
+const { getCuacaAccu, getCuacaBmkg } = require('./cuaca');
 const express = require('express');
-const axios = require('axios');
 
 const fToC = f => ((f - 32) * 5 / 9).toFixed(1);
 
@@ -35,44 +35,8 @@ whatsapp.on('message', async message => {
 
     if (message.body.toLowerCase() === 'cuaca') {
         try {
-            const apiKey = API_KEY_FORECAST;
-            const kode_kota = '209036'; // Banjarmasin
-            const response = await axios.get(`http://dataservice.accuweather.com/forecasts/v1/daily/1day/${kode_kota}`, {
-                params: {
-                    apikey: apiKey,
-                    language: 'id-id'
-                }
-            });
-
-            const forecast = response.data;
-            const sekarang = new Date(Date.now());
-            const tanggalFormatted = new Intl.DateTimeFormat('id-ID', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-            }).format(sekarang);
-
-            const cuacaText = `
-⚠️ *Peringatan Cuaca*:
-${forecast.Headline.Text}
-Berlaku dari ${new Date(forecast.Headline.EffectiveDate).toLocaleString("id-ID")} sampai ${new Date(forecast.Headline.EndDate).toLocaleString("id-ID")}
-
-📅 *Prakiraan Cuaca ${tanggalFormatted}*:
-🌡️ Suhu: Minimum ${fToC(forecast.DailyForecasts[0].Temperature.Minimum.Value)}°C, Maksimum ${fToC(forecast.DailyForecasts[0].Temperature.Maximum.Value)}°C
-
-☀️ *Siang*:
-${forecast.DailyForecasts[0].Day.IconPhrase}
-Hujan: ${forecast.DailyForecasts[0].Day.HasPrecipitation ? forecast.DailyForecasts[0].Day.PrecipitationType + ", intensitas " + forecast.DailyForecasts[0].Day.PrecipitationIntensity : "Tidak ada"}
-
-🌙 *Malam*:
-${forecast.DailyForecasts[0].Night.IconPhrase}
-Hujan: ${forecast.DailyForecasts[0].Night.HasPrecipitation ? forecast.DailyForecasts[0].Night.PrecipitationType + ", intensitas " + forecast.DailyForecasts[0].Night.PrecipitationIntensity : "Tidak ada"}
-
-🔗 Info lengkap: ${forecast.Headline.Link}
-                `.trim();
-
-            await message.reply(cuacaText);
+            const cuaca = await getCuacaAccu(209036); // Banjarmasin
+            await message.reply(cuaca);
         } catch (error) {
             console.error('Gagal ambil data cuaca:', error.message);
             await message.reply('Maaf, gagal mengambil data cuaca saat ini.');
@@ -112,6 +76,29 @@ Hujan: ${forecast.DailyForecasts[0].Night.HasPrecipitation ? forecast.DailyForec
             await message.reply('Maaf, gagal mengambil data jadwal sholat saat ini.');
         }
     }
+
+    if (message.body.toLowerCase().startsWith('cuaca ')) {
+        const wilayah = message.body.split(' ')[1];
+        const validWilayah = {
+            'pelaihari': '63.01.03.1004',
+            'belitung': '63.71.03.1001',
+            'bumi mas': '63.71.01.1011'
+        };
+        if (!validWilayah[wilayah.toLowerCase()]) {
+            return message.reply('Wilayah tidak dikenali. Silakan coba dengan "cuaca pelaihari", "cuaca belitung", atau "cuaca bumi mas".');
+        }
+        const kode_wilayah = validWilayah[wilayah.toLowerCase()];
+
+        try {
+            const cuaca = await getCuacaBmkg(kode_wilayah);
+            await message.reply(cuaca);
+        } catch (error) {
+            console.error('Gagal ambil data cuaca:', error.message);
+            await message.reply('Maaf, gagal mengambil data cuaca saat ini.');
+        }
+    }
+
+    message.reply(`Pesan anda tidak dikenali. Silakan coba dengan "cuaca" atau "jadwal sholat".`);
 });
 
 whatsapp.initialize();
