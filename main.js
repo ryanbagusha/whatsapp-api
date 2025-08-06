@@ -1,6 +1,7 @@
 const qrcode = require('qrcode-terminal');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const { getCuacaAccu, getCuacaBmkg } = require('./cuaca');
+const { getJadwalSholat } = require('./jadwal_sholat');
 const express = require('express');
 
 const whatsapp = new Client({
@@ -40,32 +41,8 @@ whatsapp.on('message', async message => {
 
     if (message.body.toLowerCase() === 'jadwal sholat') {
         try {
-            const tanggal = new Date().toISOString().split('T')[0];
-            const kode_kota = '2113'; // Banjarmasin
-            const response = await axios.get(`https://api.myquran.com/v2/sholat/jadwal/${kode_kota}/${tanggal}`);
-
-            const data = response.data.data;
-            const sekarang = new Date(Date.now());
-            const tanggalFormatted = new Intl.DateTimeFormat('id-ID', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-            }).format(sekarang);
-
-            const pesan = `
-🕌 *Jadwal Sholat - ${data.lokasi}*\n📍 *${data.daerah}*\n📅 *${tanggalFormatted}*\n
-- 🕓 *Imsak*     : ${data.jadwal.imsak}
-- 🌄 *Subuh*     : ${data.jadwal.subuh}
-- 🌅 *Terbit*    : ${data.jadwal.terbit}
-- ☀️ *Dhuha*     : ${data.jadwal.dhuha}
-- 🕛 *Dzuhur*    : ${data.jadwal.dzuhur}
-- 🕒 *Ashar*     : ${data.jadwal.ashar}
-- 🌇 *Maghrib*   : ${data.jadwal.maghrib}
-- 🌙 *Isya*      : ${data.jadwal.isya}
-`.trim();
-
-            await message.reply(pesan);
+            const jadwal = await getJadwalSholat(2113); // Banjarmasin
+            await message.reply(jadwal);    
         } catch (error) {
             console.error('Gagal ambil data jadwal sholat:', error.message);
             await message.reply('Maaf, gagal mengambil data jadwal sholat saat ini.');
@@ -77,10 +54,10 @@ whatsapp.on('message', async message => {
         const validWilayah = {
             'pelaihari': '63.01.03.1004',
             'belitung': '63.71.03.1001',
-            'bumi mas': '63.71.01.1011'
+            'bumimas': '63.71.01.1011'
         };
         if (!validWilayah[wilayah.toLowerCase()]) {
-            return message.reply('Wilayah tidak dikenali. Silakan coba dengan "cuaca pelaihari", "cuaca belitung", atau "cuaca bumi mas".');
+            return message.reply('Wilayah tidak dikenali. Silakan coba dengan "cuaca pelaihari", "cuaca belitung", atau "cuaca bumimas".');
         }
         const kode_wilayah = validWilayah[wilayah.toLowerCase()];
 
@@ -92,8 +69,6 @@ whatsapp.on('message', async message => {
             await message.reply('Maaf, gagal mengambil data cuaca saat ini.');
         }
     }
-
-    message.reply(`Pesan anda tidak dikenali. Silakan coba dengan "cuaca" atau "jadwal sholat".`);
 });
 
 whatsapp.initialize();
