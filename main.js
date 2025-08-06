@@ -1,11 +1,7 @@
-require('dotenv').config();
-
 const qrcode = require('qrcode-terminal');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const { getCuacaAccu, getCuacaBmkg } = require('./cuaca');
 const express = require('express');
-
-const fToC = f => ((f - 32) * 5 / 9).toFixed(1);
 
 const whatsapp = new Client({
     authStrategy: new LocalAuth(),
@@ -16,7 +12,6 @@ const whatsapp = new Client({
 });
 const app = express();
 const PORT = 3000;
-const API_KEY_FORECAST = process.env.API_KEY_FORECAST;
 
 whatsapp.on('qr', qr => {
     qrcode.generate(qr, {

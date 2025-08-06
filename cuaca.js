@@ -1,4 +1,10 @@
+require('dotenv').config();
+
 const axios = require('axios');
+
+const API_KEY_FORECAST = process.env.API_KEY_FORECAST;
+
+const fToC = f => ((f - 32) * 5 / 9).toFixed(1);
 
 async function getCuacaAccu(kode_kota) {
     const apiKey = API_KEY_FORECAST;
